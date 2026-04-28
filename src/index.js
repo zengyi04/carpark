@@ -8,6 +8,7 @@ const favoriteRoutes = require('./routes/favorites');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const PORT_SEARCH_LIMIT = 10;
 
 // Middleware
 app.use(express.json());
@@ -15,6 +16,9 @@ app.use(express.urlencoded({ extended: true }));
 
 // Swagger UI
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+app.get('/swagger-ui.html', (req, res) => {
+  res.redirect('/api-docs');
+});
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -23,7 +27,7 @@ app.get('/health', (req, res) => {
 
 // API Routes
 app.use('/api/carparks', carparkRoutes);
-app.use('/api/favorites', favoriteRoutes);
+app.use(['/api/favorites', '/api/favourites'], favoriteRoutes);
 
 // Root endpoint
 app.get('/', (req, res) => {
@@ -56,12 +60,37 @@ app.use((err, req, res, next) => {
   });
 });
 
+async function startServer() {
+  for (let offset = 0; offset < PORT_SEARCH_LIMIT; offset += 1) {
+    const candidatePort = Number(PORT) + offset;
+
+    try {
+      await new Promise((resolve, reject) => {
+        const server = app.listen(candidatePort, () => resolve(server));
+        server.once('error', reject);
+      });
+
+      console.log(`✓ Server is running on http://localhost:${candidatePort}`);
+      console.log(`✓ API Documentation: http://localhost:${candidatePort}/api-docs`);
+      console.log(`✓ Health check: http://localhost:${candidatePort}/health`);
+      return;
+    } catch (error) {
+      if (error.code !== 'EADDRINUSE') {
+        throw error;
+      }
+    }
+  }
+
+  throw new Error(`Unable to find a free port starting from ${PORT}`);
+}
+
 // Start server
-app.listen(PORT, () => {
-  console.log(`✓ Server is running on http://localhost:${PORT}`);
-  console.log(`✓ API Documentation: http://localhost:${PORT}/api-docs`);
-  console.log(`✓ Health check: http://localhost:${PORT}/health`);
-});
+if (require.main === module) {
+  startServer().catch((error) => {
+    console.error(error);
+    process.exit(1);
+  });
+}
 
 // Graceful shutdown
 process.on('SIGINT', async () => {
