@@ -1,0 +1,53 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Users table
+model Users {
+  userId        String          @id
+  email         String
+  favourites    UserFavourite[]
+
+  @@map("Users")
+}
+
+// Carpark table
+model Carpark {
+  carParkNo              String          @id
+  address                String
+  xCoord                 Float
+  yCoord                 Float
+  carParkType            String
+  typeOfParkingSystem    String
+  shortTermParking       String
+  freeParking            String
+  nightParking           String
+  carParkDecks           Int
+  gantryHeight           Float
+  carParkBasement        String
+  favourites             UserFavourite[]
+
+  @@map("Carpark")
+}
+
+// User_Favourite table (junction table for many-to-many relationship)
+model UserFavourite {
+  id          Int       @id @default(autoincrement())
+  userId      String
+  carParkNo   String
+  
+  user        Users     @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  carpark     Carpark   @relation(fields: [carParkNo], references: [carParkNo], onDelete: Cascade)
+
+  @@unique([userId, carParkNo]) // Prevent duplicate favourites
+  @@map("User_Favourite")
+}
