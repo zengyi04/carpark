@@ -2,6 +2,8 @@
 
 A complete, production-ready backend API for HDB carpark information with advanced filtering and user favorites management.
 
+Frontend scope note: This assignment does not require frontend screens. This repository intentionally implements backend APIs only, with API usage guidance for frontend developers in FRONTEND_GUIDE.md.
+
 **Status**: ✅ **COMPLETE & DEPLOYED**
 
 ## 🎯 Assignment Tasks - All Complete
